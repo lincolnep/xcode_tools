@@ -10,7 +10,7 @@ import subprocess
 import urllib2
 
 xcode_pkg_names = ['CLTools', 'DevSDK']
-su_catalog = 'https://swscan.apple.com/content/catalogs/others/index-10.12.merged-1.sucatalog'
+su_catalog = 'https://swscan.apple.com/content/catalogs/others/index-10.12.merged-1.sucatalog'  # NOQA
 output_path = os.path.expanduser('~/Desktop/')
 request = urllib2.Request(su_catalog)
 request = urllib2.urlopen(request)
@@ -31,9 +31,12 @@ def curl(input_file, output_file):
 
 for product in catalog['Products']:
     packages = catalog['Products'][product]['Packages']
+    post_date = catalog['Products'][product]['PostDate']
     for item in packages:
         for pkg_name in xcode_pkg_names:
             if pkg_name in item['URL']:
                 basename = os.path.basename(item['URL'])
-                print 'Downloading %s' % os.path.basename(item['URL'])
+                print 'Downloading %s (released %s)' % (
+                    os.path.basename(item['URL']), post_date
+                )
                 curl(item['URL'], os.path.join(output_path, basename))

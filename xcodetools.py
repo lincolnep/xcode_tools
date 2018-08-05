@@ -350,7 +350,7 @@ def main():
         dest='mac_os_versions',
         metavar='<os version>',
         choices=['10.9', '10.10', '10.11', '10.12', '10.13', '10.14'],
-        help='Specify alternative macOS release to download tools for.',
+        help='Specify alternative macOS release to download tools for. If not supplied, defaults to version of macOS installed on client.',
         required=False
     )
 

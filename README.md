@@ -17,5 +17,7 @@ This utility parses the Software Update catalog for specific macOS versions (if 
 
 This can also be used to install the tools.
 
+If no arguments are provided, the default behaviour is to download the Command Line Tools and SDK (if available) for the release of macOS the script is run on.
+
 ## Why not just run  `xcode-select --install` ??
 Because any opportunity to avoid pesky GUI dialog boxes is one worth taking!

@@ -19,5 +19,9 @@ This can also be used to install the tools.
 
 If no arguments are provided, the default behaviour is to download the Command Line Tools and SDK (if available) for the release of macOS the script is run on.
 
+*Note*
+The `-c`, `--catalog` argument is pretty much pointless as the packages are all (based on checking out the merged 10.14 through Leopard catalogs) pulling from the same URL's.
+Don't panic if `-c`, `--catalog` `beta|customerseed|developerseed` catalogs returns no results.
+
 ## Why not just run  `xcode-select --install` ??
 Because any opportunity to avoid pesky GUI dialog boxes is one worth taking!

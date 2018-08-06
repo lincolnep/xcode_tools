@@ -3,6 +3,7 @@
 '''Downloads the Xcode CLI tools using the Apple Software Update catalog.'''
 
 import argparse  # NOQA
+import gzip  # NOQA
 import xml.etree.ElementTree as ET  # NOQA
 import os  # NOQA
 import plistlib  # NOQA
@@ -55,6 +56,10 @@ class XcodeCLI():
         # Construct a dictionary of known software update catalogs
         # Thanks to Pike: https://pikeralpha.wordpress.com/2017/06/06/catalogurl-for-macos-10-13-high-sierra/
         # Hopefully this URL format doesn't change for each release, as at 2018-08-05 it hasn't for OS releases 10.11+
+        # Note - these beta/customerseed/seed URL's don't seem to actually be of any benefit unless you're using the full
+        # https://swscan.apple.com/content/catalogs/others/index-10.13seed-10.13-10.12-10.11-10.10-10.9-mountainlion-lion-snowleopard-leopard.merged-1.sucatalog.gz
+        # style address, in which case it gets annoying to work out what version of macOS the tools/sdk are actually for.
+        # Leaving this capability in on the off chance it does work one day, but for the time being, the -c, --catalog argument is basically useless.
         self.swscan_url = 'https://swscan.apple.com/content/catalogs/others/index-'
         self.catalogs = {
             'beta': 'beta',
@@ -78,9 +83,9 @@ class XcodeCLI():
         '''Returns a string containing the sucatalog URL path to be used to check for Xcode Tools. Do not call directly.'''
         try:
             if catalog:
-                return '{}{}{}.merged-1.sucatalog'.format(self.swscan_url, mac_os_ver, self.catalogs[catalog])
+                return '{}{}{}.merged-1.sucatalog.gz'.format(self.swscan_url, mac_os_ver, self.catalogs[catalog])
             else:
-                return '{}{}.merged-1.sucatalog'.format(self.swscan_url, mac_os_ver)
+                return '{}{}.merged-1.sucatalog.gz'.format(self.swscan_url, mac_os_ver)
         except Exception:
             raise
 
@@ -99,8 +104,14 @@ class XcodeCLI():
             # Download the sucatalog
             self.curl(self.sucatalog_url, destination_file, quiet=True)
 
+            # Read in the GZ file with gzip
+            with gzip.open(destination_file, 'rb') as sucatalog_file:
+                catalog = sucatalog_file.read()
+
             # Process the catalog file into a dictionary
-            catalog = plistlib.readPlist(destination_file)
+            catalog = plistlib.readPlistFromString(catalog)
+
+            # Iterate, yo.
             for product in catalog['Products']:
                 packages = catalog['Products'][product]['Packages']
                 post_date = catalog['Products'][product]['PostDate']
@@ -306,7 +317,7 @@ def main():
         dest='alternate_catalog',
         metavar='<catalog>',
         choices=['beta', 'customerseed', 'developerseed'],
-        help='Specify a non standard softare update catalog (such as beta/customer/developer seed).',
+        help='Specify a non standard softare update catalog (such as beta/customer/developer seed). Note, this is pretty much pointless as the CLTools and SDK packages are pretty much the same files regardless of which program catalog you access.',
     )
 
     parser.add_argument(
@@ -384,7 +395,7 @@ def main():
     else:
         mac_vers = False
 
-    xcode = XcodeCLI(allow_untrusted_pkg_install=args.allow_untrusted, catalog=alt_catalog, destination=download_dest, install=args.install_packages, install_target=target, mac_os_ver=mac_vers, quiet=args.quiet_output)
+    xcode = XcodeCLI(allow_untrusted_pkg_install=args.allow_untrusted, catalog=alt_catalog, destination=download_dest, dry_run=args.dry_run, install=args.install_packages, install_target=target, mac_os_ver=mac_vers, quiet=args.quiet_output)
     xcode.mainProcessor()
 
 

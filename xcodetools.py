@@ -71,7 +71,8 @@ class XcodeCLI():
         self.supported_os_versions = ['10.9', '10.10', '10.11', '10.12', '10.13', '10.14']
 
         # Xcode package names to check
-        self.pkg_names = ['CLTools', 'DevSDK']
+        # Filename change in macOS 10.14 CL Tools. CLTools_SDK replaces DevSDK. Being explicit even tho CLTools will match
+        self.pkg_names = ['CLTools', 'CLTools_SDK', 'DevSDK']
 
         # SU Catalog URL to use
         self.sucatalog_url = self.swscanURL(self.mac_os_ver, self.catalog)
@@ -119,6 +120,7 @@ class XcodeCLI():
                     for pkg_name in self.pkg_names:
                         if pkg_name in item['URL']:
                             basename = os.path.basename(item['URL'])
+                            distribution = catalog['Products'][product]['Distributions']['English']  # Not used in this tool presently, but may in future.
                             product_id = product
                             metadataSMDurl = catalog['Products'][product]['ServerMetadataURL']
                             metadataPKMurl = item['MetadataURL']
@@ -132,9 +134,9 @@ class XcodeCLI():
 
                             # Test if combo already exists in dictionary and if so, version comparison test to make sure only latest version gets added
                             if basename not in self.packages_to_process.keys():
-                                self.packages_to_process[basename] = {'product_id': product_id, 'pkg_title': pkg_title, 'pkg': basename, 'url': item['URL'], 'post_date': post_date, 'version': pkg_ver, 'long_version': long_pkg_ver, 'pkg_identifier': pkg_id, 'download_name': pkg_download_name}
+                                self.packages_to_process[basename] = {'distribution': distribution, 'product_id': product_id, 'pkg_title': pkg_title, 'pkg': basename, 'url': item['URL'], 'post_date': post_date, 'version': pkg_ver, 'long_version': long_pkg_ver, 'pkg_identifier': pkg_id, 'download_name': pkg_download_name}
                             elif basename in self.packages_to_process.keys() and LooseVersion(long_pkg_ver) > LooseVersion(self.packages_to_process[basename]['long_version']):
-                                self.packages_to_process[basename] = {'product_id': product_id, 'pkg_title': pkg_title, 'pkg': basename, 'url': item['URL'], 'post_date': post_date, 'version': pkg_ver, 'long_version': long_pkg_ver, 'pkg_identifier': pkg_id, 'download_name': pkg_download_name}
+                                self.packages_to_process[basename] = {'distribution': distribution, 'product_id': product_id, 'pkg_title': pkg_title, 'pkg': basename, 'url': item['URL'], 'post_date': post_date, 'version': pkg_ver, 'long_version': long_pkg_ver, 'pkg_identifier': pkg_id, 'download_name': pkg_download_name}
 
             # Remove the file now we're finished with it
             try:
@@ -241,6 +243,7 @@ class XcodeCLI():
                 self.curl(input_file=pkg_url, output_file=download_file)
 
         if self.install:
+            # It appears these need to be installed first.
             for pkg in remove_pkgs:
                 try:
                     if not self.dry_run:
